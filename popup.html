@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Quiz AI Analyzer</title>
+    <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+    <main class="popup-shell">
+        <header class="app-header">
+            <img class="brand-mark" src="icons/icon48.png" alt="" />
+            <div class="brand-copy">
+                <h1>XD - <span id="appVersion">v1.1.0</span></h1>
+                <p>Peco-XT</p>
+            </div>
+            <button type="button" id="openGuide" class="guide-button"
+                aria-label="Abrir guía de uso" title="Guía de uso">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M9.6 9a2.5 2.5 0 1 1 4.2 1.8c-1.1 1-1.8 1.4-1.8 3.2M12 17.5v.1" />
+                </svg>
+            </button>
+            <button type="button" id="openNotices" class="guide-button notices-button"
+                aria-label="Ver avisos de configuración" title="Avisos de configuración"
+                aria-expanded="false" aria-controls="noticesPanel">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12h4" />
+                </svg>
+                <span id="noticesBadge" class="notices-badge" hidden></span>
+            </button>
+            <button type="button" id="openLicense" class="guide-button"
+                aria-label="Abrir licencias" title="Licencia Peco-XT"
+                aria-expanded="false" aria-controls="licenseView">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="8" cy="15" r="5.25" />
+                    <path d="m11.8 11.2 8.7-8.7 2.1 2.1-2.1 2.1 1.5 1.5-2.1 2.1-1.5-1.5-2.8 2.8" />
+                </svg>
+            </button>
+        </header>
+
+        <div id="settingsView">
+        <section id="noticesPanel" class="notices-panel" aria-label="Avisos de configuración" hidden>
+            <div class="notices-heading">
+                <div>
+                    <h2>Avisos de configuración</h2>
+                    <p id="setupStatus" role="status">Comprobando el proveedor...</p>
+                </div>
+                <button type="button" id="clearNotices" class="clear-notices" hidden>Limpiar</button>
+            </div>
+            <ul id="noticesList" class="notices-list"></ul>
+            <p id="noticesEmpty" class="notices-empty" hidden>No hay avisos recientes.</p>
+        </section>
+
+        <section class="card api-card" aria-labelledby="apiHeading">
+            <div class="section-heading">
+                <div>
+                    <h2 id="apiHeading">Proveedor de IA</h2>
+                    <p>Elige dónde procesar las preguntas</p>
+                </div>
+            </div>
+            <div class="provider-options" role="radiogroup" aria-label="Proveedor de IA">
+                <label class="provider-option" data-provider="gemini" title="Gemini API">
+                    <input type="radio" name="provider" value="gemini" aria-label="Gemini API" checked />
+                    <svg class="provider-icon key-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="8" cy="15" r="5.25" />
+                        <path d="m11.8 11.2 8.7-8.7 2.1 2.1-2.1 2.1 1.5 1.5-2.1 2.1-1.5-1.5-2.8 2.8" />
+                    </svg>
+                    <span class="visually-hidden">Gemini API</span>
+                </label>
+                <label class="provider-option" data-provider="gemini-web" title="Gemini web">
+                    <input type="radio" name="provider" value="gemini-web" aria-label="Gemini web" />
+                    <img class="provider-icon" src="icons/gemini.svg" alt="" aria-hidden="true" />
+                    <span class="visually-hidden">Gemini web</span>
+                </label>
+                <label class="provider-option" data-provider="deepseek" title="DeepSeek web">
+                    <input type="radio" name="provider" value="deepseek" aria-label="DeepSeek web" />
+                    <img class="provider-icon" src="icons/deepseek.svg" alt="" aria-hidden="true" />
+                    <span class="visually-hidden">DeepSeek web</span>
+                </label>
+                <label class="provider-option" data-provider="chatgpt" title="ChatGPT web">
+                    <input type="radio" name="provider" value="chatgpt" aria-label="ChatGPT web" />
+                    <img class="provider-icon" src="icons/chatgpt.svg" alt="" aria-hidden="true" />
+                    <span class="visually-hidden">ChatGPT web</span>
+                </label>
+            </div>
+            <p id="providerHelp" class="provider-help">
+                El proveedor seleccionado se aplicará al guardar la configuración.
+            </p>
+            <div id="geminiKeysSection">
+                <div class="api-actions">
+                    <button type="button" id="addApiKey" class="compact-button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                        Agregar API
+                    </button>
+                    <button type="button" id="toggleApiKeys" class="compact-button secondary-button"
+                        aria-expanded="false" aria-controls="apiKeysList">
+                        <span id="apiKeysLabel">Ver APIs (0)</span>
+                        <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                </div>
+                <div id="apiKeysList" class="api-keys-list" hidden></div>
+                <p id="apiKeyPlanNote" class="plan-limit-note"></p>
+            </div>
+
+            <div class="prompt-control">
+                <button type="button" id="toggleResponseStyle" class="disclosure-button"
+                    aria-expanded="false" aria-controls="responseStylePanel">
+                    <span>Estilo para respuestas abiertas</span>
+                    <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div id="responseStylePanel" class="prompt-panel" hidden>
+                    <textarea id="responseStyle" class="style-input" maxlength="500"
+                        aria-label="Estilo para respuestas abiertas"
+                        placeholder="Natural, clara y directa; añade solo el contexto útil."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <section class="card appearance-card" aria-labelledby="appearanceHeading">
+            <div class="section-heading">
+                <div>
+                    <h2 id="appearanceHeading">Apariencia</h2>
+                </div>
+            </div>
+
+            <div class="color-control">
+                <div class="control-copy">
+                    <label class="field-label" for="colorHex">Color de resaltado</label>
+                    <span>Se aplica a radios y casillas</span>
+                </div>
+                <div class="color-inputs">
+                    <label class="color-swatch" aria-label="Elegir color">
+                        <input type="color" id="highlightColor" value="#3478B8" />
+                    </label>
+                    <input type="text" id="colorHex" class="hex-input" value="#3478B8" maxlength="7" aria-label="Código hexadecimal del color" />
+                </div>
+            </div>
+
+            <div class="range-controls">
+                <div class="range-control">
+                    <div class="range-heading">
+                        <label class="field-label" for="highlightOpacity">Transparencia</label>
+                        <output id="opacityVal" class="range-value">85%</output>
+                    </div>
+                    <input type="range" id="highlightOpacity" min="0" max="1" step="0.05" value="0.85" />
+                </div>
+
+                <div class="range-control">
+                    <div class="range-heading">
+                        <label class="field-label" for="highlightRadius">Redondeado</label>
+                        <output id="radiusVal" class="range-value">4px</output>
+                    </div>
+                    <input type="range" id="highlightRadius" min="0" max="50" step="1" value="4" />
+                </div>
+            </div>
+
+            <div class="preview-controls">
+                <div class="preview-panel" data-theme="dark" aria-label="Vista previa del resaltado">
+                    <div class="preview-option">
+                        <span id="previewRadio" class="preview-radio"></span>
+                        <span>Opción única</span>
+                    </div>
+                    <div class="preview-option">
+                        <span class="preview-checkbox"><span class="preview-check"></span></span>
+                        <span>Varias opciones</span>
+                    </div>
+                </div>
+                <button type="button" id="previewThemeToggle" class="preview-theme-toggle"
+                    aria-label="Cambiar a modo claro" aria-pressed="false" title="Cambiar a modo claro">
+                    <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20.2 15.4A8.5 8.5 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z" />
+                    </svg>
+                    <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4" />
+                        <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <p id="settingsSaveStatus" class="settings-save-status" role="status" aria-live="polite"></p>
+
+        <footer class="popup-footer">
+            <div class="shortcut-item">
+                <span class="shortcut-key">CTRL</span>
+                <span>+</span>
+                <span class="shortcut-key">CLIC</span>
+                <span>analizar</span>
+            </div>
+            <div class="shortcut-item">
+                <span class="shortcut-key">CTRL</span>
+                <span>+</span>
+                <span class="shortcut-key">ALT</span>
+                <span>+</span>
+                <span class="shortcut-key">CLIC</span>
+                <span id="forceRefreshHint">Completo: ignorar caché</span>
+            </div>
+        </footer>
+        </div>
+
+        <section id="licenseView" class="license-view" aria-labelledby="licenseHeading" hidden>
+            <button type="button" id="backToSettings" class="license-back">
+                <span aria-hidden="true">←</span> Volver a ajustes
+            </button>
+            <div class="license-page-heading">
+                <span class="license-page-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="8" cy="15" r="5.25" />
+                        <path d="m11.8 11.2 8.7-8.7 2.1 2.1-2.1 2.1 1.5 1.5-2.1 2.1-1.5-1.5-2.8 2.8" />
+                    </svg>
+                </span>
+                <div>
+                    <h2 id="licenseHeading">Licencias Peco-XT</h2>
+                    <p>Gestiona tu acceso Completo en este dispositivo.</p>
+                </div>
+            </div>
+            <div class="license-plan">
+                <h3>Gratis</h3>
+                <ul>
+                    <li>Toda la personalización de apariencia.</li>
+                    <li>Elige una IA; tras usarla por primera vez, queda asociada a este perfil.</li>
+                    <li>Una clave de Gemini API.</li>
+                    <li>Atajo Ctrl+clic.</li>
+                </ul>
+            </div>
+            <div class="license-plan license-plan-complete">
+                <h3>Completo</h3>
+                <ul>
+                    <li>Cambia entre Gemini API, Gemini web, DeepSeek y ChatGPT.</li>
+                    <li>Configura varias claves de Gemini API.</li>
+                    <li>Usa Ctrl+Alt+clic para omitir la caché y pedir una nueva respuesta.</li>
+                    <li>Hasta dos instalaciones/perfiles por licencia.</li>
+                </ul>
+            </div>
+            <p id="licenseStatus" class="license-status" role="status" aria-live="polite">
+                Comprobando licencia...
+            </p>
+            <label class="license-field-label" for="licenseKey">Clave proporcionada por el administrador</label>
+            <div class="license-controls">
+                <input id="licenseKey" class="license-key-input" type="password"
+                    autocomplete="off" spellcheck="false" placeholder="Pega aquí tu clave de licencia" />
+                <button type="button" id="activateLicense" class="compact-button">Activar</button>
+            </div>
+            <button type="button" id="deactivateLicense" class="license-deactivate" hidden>
+                Desactivar en este dispositivo
+            </button>
+            <p class="license-footnote">
+                La clave se guarda en este perfil del navegador. No compartas tu clave.
+                No se realizan pagos desde esta pantalla.
+            </p>
+        </section>
+    </main>
+    <script type="module" src="popup.js"></script>
+</body>
+</html>

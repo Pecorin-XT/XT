@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.crx
+*.pem
+*.zip
+.env
+.env.*
+!.env.example

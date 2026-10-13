@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Peco-XT · Laboratorio de Práctica</title>
+    <link rel="stylesheet" href="practice.css" />
+    <script src="guide-practice.js" defer></script>
+</head>
+<body>
+    <main class="lab-shell">
+        <!-- Header -->
+        <header class="lab-header">
+            <a class="brand" href="guide.html" aria-label="Volver a la guía de Peco-XT">
+                <img src="icons/icon48.png" alt="Peco-XT" draggable="false" />
+                <span>Peco-XT <span class="brand-divider">/</span> LABORATORIO</span>
+            </a>
+            <a class="guide-link" href="guide.html">
+                <span>Volver a la guía</span>
+                <span class="arrow-icon" aria-hidden="true">↗</span>
+            </a>
+        </header>
+
+        <!-- Hero simplificado -->
+        <section class="lab-hero">
+            <div class="hero-badge">
+                <span class="ping-dot"></span>
+                <span>ENTORNO DE PRUEBA</span>
+            </div>
+            <h1 id="labTitle">Laboratorio de Práctica</h1>
+            <p class="hero-copy">
+                Experimenta con los atajos reales de Peco-XT. La IA resaltará opciones o propondrá borradores sin seleccionar ni enviar nada por ti.
+            </p>
+        </section>
+
+        <!-- Barra de Atajos + Vista Previa de Marcadores (Compacta y Horizontal) -->
+        <section class="practice-toolbar" aria-label="Herramientas y referencias">
+            <div class="toolbar-shortcuts">
+                <span class="sub-label">ATAJOS ACTIVOS</span>
+                <div class="shortcut-pills">
+                    <span class="pill-item"><kbd>Ctrl</kbd> + <kbd>Clic</kbd> Consultar IA</span>
+                    <span class="pill-item"><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Clic</kbd> Forzar consulta</span>
+                </div>
+            </div>
+
+            <div class="toolbar-markers">
+                <span class="sub-label">VISTA PREVIA</span>
+                <div class="markers-row">
+                    <div class="marker-chip">
+                        <span class="legend-ring" aria-hidden="true"></span>
+                        <span>Selección única</span>
+                    </div>
+                    <div class="marker-chip">
+                        <span class="legend-dot" aria-hidden="true"></span>
+                        <span>Selección múltiple</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Formulario de Ejercicios -->
+        <section class="lab-exercises">
+            <div class="exercise-heading">
+                <div>
+                    <span class="sub-label">REACTIVOS DE EVALUACIÓN</span>
+                    <h2 id="exerciseTitle">6 ejercicios prácticos</h2>
+                </div>
+                <p>Haz clic en el enunciado para consultar. Marca tu respuesta antes de validar.</p>
+            </div>
+
+            <form id="practiceForm" novalidate>
+                <div id="practiceQuestions" class="practice-grid" aria-label="Preguntas de práctica"></div>
+                
+                <div class="validation-bar">
+                    <div class="validation-info">
+                        <strong>¿Finalizaste tus respuestas?</strong>
+                        <span>Se cotejarán automáticamente únicamente las preguntas de selección.</span>
+                    </div>
+                    <button id="validatePractice" class="practice-validate" type="submit">Validar respuestas</button>
+                </div>
+                <p id="validationResults" class="validation-results" aria-live="polite"></p>
+            </form>
+            <p id="practiceStatus" class="practice-status" role="status" aria-live="polite"></p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="lab-footer">
+            <span>Las consultas a la IA son opcionales y pueden consumir cuota de tu proveedor configurado.</span>
+            <a href="guide.html#privacy">Privacidad y uso responsable</a>
+        </footer>
+    </main>
+</body>
+</html>

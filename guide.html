@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Peco-XT · Centro de Ayuda y Guía de Uso</title>
+    <!-- Hoja de estilos con variables y componentes Tailwind/Flowbite integrados localmente -->
+    <link rel="stylesheet" href="guide.css" />
+    <script src="guide.js" defer></script>
+  </head>
+  <body
+    class="bg-gray-950 text-gray-200 antialiased"
+  >
+    <!-- Navbar flotante estilo Flowbite Dark -->
+    <header class="navbar-sticky">
+      <div class="shell nav-container">
+        <a href="#" class="brand-link" aria-label="Inicio de la guía">
+          <img
+            class="brand-logo"
+            src="icons/icon48.png"
+            alt="Logo Peco-XT"
+            draggable="false"
+          />
+          <div class="brand-text">
+            <span class="brand-title">Peco-XT</span>
+            <span class="brand-badge">GUÍA OFICIAL</span>
+          </div>
+        </a>
+        <nav class="nav-links" aria-label="Navegación principal">
+          <a href="#setup" class="nav-item">Configuración</a>
+          <a href="#shortcuts" class="nav-item">Atajos</a>
+          <a
+            href="practice.html"
+            target="_blank"
+            rel="noopener"
+            class="nav-item nav-item-highlight"
+          >
+            Laboratorio <span class="arrow-icon">↗</span>
+          </a>
+          <a href="#opera" class="nav-item">Opera &amp; Espacios</a>
+          <a href="#privacy" class="nav-item">Privacidad</a>
+          <a href="#about" class="nav-item">Acerca de</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="shell page-content">
+      <!-- Hero Section estilizado tipo Flowbite Jumbotron -->
+      <section class="hero-section">
+        <h1 class="hero-title">
+          Piensa por ti mismo.<br />
+          <span class="gradient-text">Peco-XT te respalda.</span>
+        </h1>
+        <p class="hero-description">
+          Optimiza tus sesiones académicas mediante la integración directa de
+          modelos de lenguaje en tu navegador. Consulta criterios de referencia,
+          despeja dudas en enunciados complejos y conserva siempre el control de
+          tu aprendizaje.
+        </p>
+      </section>
+
+      <!-- Banner de Principio Pedagógico -->
+      <section class="principle-banner" aria-labelledby="principleHeading">
+        <div class="principle-icon-box">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <div class="principle-text">
+          <span class="sub-label">PAUSA ACTIVA DE RAZONAMIENTO</span>
+          <h2 id="principleHeading">
+            Primero tu intelecto; luego la asistencia.
+          </h2>
+          <p>
+            Lee la pregunta y formula mentalmente una solución fundamentada. La
+            inteligencia artificial es un copiloto valioso para contrastar
+            enfoques y superar bloqueos, pero no sustituye tu comprensión
+            crítica.
+          </p>
+        </div>
+      </section>
+
+      <!-- Paso 1: Configurar Proveedor -->
+      <section class="section-card" id="setup" aria-labelledby="setupHeading">
+        <div class="section-header">
+          <div class="step-badge">1</div>
+          <div>
+            <span class="sub-label">PREPARACIÓN</span>
+            <h2 id="setupHeading">Configura tu motor de IA</h2>
+          </div>
+        </div>
+        <p class="section-intro">
+          Abre el menú emergente (popup) de la extensión, selecciona el servicio
+          deseado y Peco-XT gestionará la conexión en segundo plano:
+        </p>
+
+        <div class="grid-4">
+          <article class="card-item">
+            <div class="card-top">
+              <div class="card-icon-wrapper key-bg">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="8" cy="15" r="5.25" />
+                  <path
+                    d="m11.8 11.2 8.7-8.7 2.1 2.1-2.1 2.1 1.5 1.5-2.1 2.1-1.5-1.5-2.8 2.8"
+                  />
+                </svg>
+              </div>
+              <span class="tag-badge">Recomendado</span>
+            </div>
+            <h3>Gemini API</h3>
+            <p>
+              Introduce tu clave gratuita de <em>Google AI Studio</em> en
+              Agregar API. Las peticiones se procesan vía API directa, sin
+              requerir pestañas auxiliares abiertas.
+            </p>
+          </article>
+
+          <article class="card-item">
+            <div class="card-top">
+              <div class="card-icon-wrapper">
+                <img
+                  class="provider-svg"
+                  src="icons/gemini.svg"
+                  alt="Gemini"
+                  draggable="false"
+                />
+              </div>
+              <span class="tag-badge text-gray-400 border-gray-800">Web</span>
+            </div>
+            <h3>Gemini Web</h3>
+            <p>
+              Inicia sesión en Gemini y mantén una pestaña normal abierta.
+              Gemini no se conecta desde el panel lateral de Opera.
+            </p>
+          </article>
+
+          <article class="card-item">
+            <div class="card-top">
+              <div class="card-icon-wrapper">
+                <img
+                  class="provider-svg"
+                  src="icons/deepseek.svg"
+                  alt="DeepSeek"
+                  draggable="false"
+                />
+              </div>
+              <span class="tag-badge text-gray-400 border-gray-800">Web</span>
+            </div>
+            <h3>DeepSeek Web</h3>
+            <p>
+              Inicia sesión en DeepSeek y mantén su página activa en una pestaña
+              convencional para permitir el enlace de consultas.
+            </p>
+          </article>
+
+          <article class="card-item">
+            <div class="card-top">
+              <div class="card-icon-wrapper">
+                <img
+                  class="provider-svg"
+                  src="icons/chatgpt.svg"
+                  alt="ChatGPT"
+                  draggable="false"
+                />
+              </div>
+              <span class="tag-badge text-gray-400 border-gray-800">Web</span>
+            </div>
+            <h3>ChatGPT Web</h3>
+            <p>
+              Aprovecha tu sesión activa de OpenAI en una pestaña estándar o
+              desde el panel lateral de Opera.
+            </p>
+          </article>
+        </div>
+
+        <div class="alert-box">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span
+            ><strong>Privacidad local:</strong> Las claves API se almacenan de
+            forma aislada en el almacenamiento del navegador. Jamás se comparten
+            ni se transfieren a servidores externos.</span
+          >
+        </div>
+      </section>
+
+      <!-- Paso 2: Atajos de teclado -->
+      <section class="section-card" id="shortcuts" aria-labelledby="useHeading">
+        <div class="section-header">
+          <div class="step-badge">2</div>
+          <div>
+            <span class="sub-label">INTERACCIÓN EN CUESTIONARIOS</span>
+            <h2 id="useHeading">Atajos de interacción rápida</h2>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <article class="shortcut-box">
+            <div class="keys-container">
+              <kbd>Ctrl</kbd><span class="plus">+</span><kbd>Clic</kbd>
+            </div>
+            <h3>Analizar la pregunta</h3>
+            <p>
+              Haz clic dentro del área de la pregunta. Peco-XT la enviará al
+              motor activo y resaltará visualmente la opción sugerida o creará
+              un borrador si es desarrollo.
+            </p>
+          </article>
+
+          <article class="shortcut-box">
+            <div class="keys-container">
+              <kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd
+              ><span class="plus">+</span><kbd>Clic</kbd>
+            </div>
+            <h3>Nueva consulta y redacción alternativa</h3>
+            <p>
+              Omite la respuesta guardada y consulta de nuevo al proveedor. En
+              preguntas abiertas, pídele un borrador con un enfoque y una
+              redacción distintos; en selección, la exactitud siempre tiene
+              prioridad y la opción correcta no debe cambiar solo por variar.
+            </p>
+          </article>
+        </div>
+
+        <div class="tip-callout">
+          <strong>Consejo de precisión:</strong> Asegúrate de hacer clic dentro
+          del contenedor de la pregunta. En preguntas abiertas el borrador se
+          inserta como apoyo inicial: revísalo, ajústalo con tus palabras y
+          envíalo con criterio.
+        </div>
+      </section>
+
+      <!-- Paso 3: Callout Laboratorio -->
+      <section class="lab-callout-card" id="practice">
+        <div class="lab-callout-content">
+          <span class="sub-label accent-label">ENTORNO DE PRUEBAS</span>
+          <h2>Laboratorio de práctica guiada</h2>
+          <p>
+            Practica con ejercicios que usan la misma estructura de preguntas
+            que reconoce la extensión. Ctrl + clic marca las opciones sugeridas
+            o inserta un borrador abierto; no selecciona ni califica respuestas.
+            Al final puedes validar las preguntas cerradas. Los textos libres
+            conservan una referencia y no se califican.
+          </p>
+        </div>
+        <a
+          class="btn-primary"
+          href="practice.html"
+          target="_blank"
+          rel="noopener"
+        >
+          <span>Abrir Laboratorio</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </section>
+
+      <!-- Paso 4: Optimización en Opera -->
+      <section class="section-flow" id="opera" aria-labelledby="operaHeading">
+        <div class="section-header">
+          <div class="step-badge">4</div>
+          <div>
+            <span class="sub-label">OPTIMIZACIÓN EN OPERA</span>
+            <h2 id="operaHeading">Organización de espacios de trabajo</h2>
+          </div>
+        </div>
+
+        <!-- Lista limpia de IAs sin saturar de bordes -->
+        <div class="grid-4" style="margin-bottom: 28px">
+          <div class="provider-mini-note">
+            <h3>Gemini API</h3>
+            <p>
+              Funciona sin una pestaña abierta y también sirve como respaldo
+              para Gemini Web, DeepSeek y ChatGPT si configuras una clave API.
+            </p>
+          </div>
+          <div class="provider-mini-note">
+            <h3>Gemini Web</h3>
+            <p>
+              Al seleccionarlo, Peco-XT activa o abre una pestaña normal; el
+              panel lateral no está conectado a Gemini.
+            </p>
+          </div>
+          <div class="provider-mini-note">
+            <h3>DeepSeek Web</h3>
+            <p>
+              Al seleccionarlo, Peco-XT activa o abre una pestaña normal. Inicia
+              sesión allí; no depende del panel lateral.
+            </p>
+          </div>
+          <div class="provider-mini-note">
+            <h3>ChatGPT Web</h3>
+            <p>
+              Peco-XT activa o abre una pestaña normal y vuelve a tu pestaña
+              original; también es compatible con el panel lateral.
+            </p>
+          </div>
+        </div>
+
+        <div class="alert-box">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span>
+            Al elegir una IA web, la extensión la activa brevemente, muestra
+            [No cerrar esta pestaña] y vuelve a la pestaña anterior. Si no hay
+            respuesta, realiza un segundo envío; el tercero usa Gemini API.
+            Para ese respaldo debes configurar una clave en la opción Gemini
+            del popup antes de volver a elegir la IA web. En DeepSeek, deja
+            iniciada la sesión y abierta una conversación: Peco-XT verifica que
+            el chat esté listo antes de enviar. La pestaña puede quedar en
+            segundo plano, aunque Opera puede limitar el trabajo de pestañas
+            inactivas.
+          </span>
+        </div>
+
+        <!-- Banner horizontal: IMAGEN A LA IZQUIERDA, TEXTO A LA DERECHA -->
+        <div class="opera-layout">
+          <figure class="opera-figure">
+            <img
+              src="guide-assets/opera-workspaces.png"
+              alt="Espacios de trabajo en Opera"
+              draggable="false"
+            />
+            <figcaption>Espacio principal vs Espacios alternativos</figcaption>
+          </figure>
+
+          <div class="opera-explanation">
+            <h3>Un entorno despejado para tus exámenes</h3>
+            <p>
+              Para evitar que las pestañas de IA saturen tu vista, mantén el
+              cuestionario en tu espacio principal y traslada las sesiones de IA
+              a un <strong>Espacio de Trabajo alternativo</strong> (por ejemplo,
+              aquellos identificados con íconos de estrellas).
+            </p>
+            <p class="opera-recommendation">
+              Recomendación: utiliza Opera para aprovechar sus espacios de
+              trabajo y mantener separadas las pestañas del cuestionario y de
+              tus sesiones de IA.
+            </p>
+            <p class="secondary-text">
+              Nota de rendimiento: La persistencia de una pestaña depende de la
+              gestión de memoria de Opera; moverla de espacio no anula por
+              completo la suspensión en reposos prolongados.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Paso 5: Personalización y Notificaciones -->
+      <section class="section-card" aria-labelledby="settingsHeading">
+        <div class="section-header">
+          <div class="step-badge">5</div>
+          <div>
+            <span class="sub-label">PERSONALIZACIÓN</span>
+            <h2 id="settingsHeading">Ajusta tu experiencia visual</h2>
+          </div>
+        </div>
+        <ul class="detail-list">
+          <li>
+            <strong>Color, opacidad y bordes:</strong> Modifica la estética de
+            los aros de selección desde el menú emergente.
+          </li>
+          <li>
+            <strong>Interruptor de tema (Sol/Luna):</strong> Ajusta la
+            previsualización del panel según tu preferencia ambiental.
+          </li>
+          <li>
+            <strong>Estilo de redacción:</strong> Elige entre respuestas
+            concisas o detalladas para preguntas abiertas.
+          </li>
+        </ul>
+      </section>
+
+      <!-- Paso 6: Privacidad y Ética con Ozuna -->
+      <section
+        class="section-card"
+        id="privacy"
+        aria-labelledby="responsibilityHeading"
+      >
+        <div class="section-header">
+          <div class="step-badge warning-badge">6</div>
+          <div>
+            <span class="sub-label amber-label"
+              >ÉTICA ACADÉMICA Y SEGURIDAD</span
+            >
+            <h2 id="responsibilityHeading">
+              La herramienta asiste; el aprendizaje es tuyo
+            </h2>
+          </div>
+        </div>
+
+        <div class="privacy-container">
+          <div class="privacy-text-column">
+            <p class="lead-quote">
+              [Como una bebida que disfrutas ocasionalmente: el exceso de IA te
+              quita la oportunidad de ejercitar tu pensamiento propio.]
+            </p>
+            <p>
+              Los modelos de lenguaje pueden generar errores con alta seguridad
+              aparente. Verifica siempre las fuentes, razona los conceptos y
+              mantén tu compromiso ético institucional. No utilices la extensión
+              para presentar trabajo ajeno como propio ni remitas datos
+              sensibles o clasificados.
+            </p>
+
+            <h4 class="data-title">Tratamiento y soberanía de datos</h4>
+            <ul class="clean-list">
+              <li>
+                <strong>Cero recopilación:</strong> Peco-XT no posee servidores
+                propios ni telemetría que capture tu actividad.
+              </li>
+              <li>
+                <strong>Canal directo:</strong> El enunciado se envía
+                estrictamente entre tu navegador y la plataforma elegida
+                (Google, OpenAI o DeepSeek).
+              </li>
+              <li>
+                <strong>Almacenamiento en tu máquina:</strong> Claves,
+                configuraciones e historial de avisos se conservan únicamente en
+                el perfil de tu navegador.
+              </li>
+            </ul>
+          </div>
+
+          <figure class="meme-card">
+            <img
+              src="guide-assets/ozuna-piensa.png"
+              alt="Ozuna pensando"
+              draggable="false"
+            />
+            <figcaption>
+              <strong>Piensa con el pensamiento.</strong>
+              <span>Confía siempre en tu juicio y criterio original.</span>
+            </figcaption>
+          </figure>
+        </div>
+
+        <p class="legal-notice">
+          Aviso legal: Peco-XT se suministra tal cual, sin garantías sobre
+          exactitud en evaluaciones. El usuario asume toda responsabilidad sobre
+          sus calificaciones y el cumplimiento de las normativas de su
+          institución.
+        </p>
+      </section>
+
+      <!-- Acerca de -->
+      <section
+        class="section-card about-card"
+        id="about"
+        aria-labelledby="aboutHeading"
+      >
+        <div>
+          <h3 id="aboutHeading">Acerca de Peco-XT</h3>
+          <p>
+            El nombre Peco-XT rinde tributo a
+            <em>Pecorine</em>. Proyecto de código abierto e
+            independiente, sin relación oficial con la franquicia ni con los
+            proveedores de IA mencionados.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer-bar">
+      <div class="shell footer-content">
+        <span>Peco-XT · Guía oficial incluida con la extensión</span>
+        <span id="extensionVersion" class="version-pill">v1.1.0</span>
+      </div>
+    </footer>
+  </body>
+</html>
