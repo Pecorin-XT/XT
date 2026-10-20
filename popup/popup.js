@@ -1,4 +1,4 @@
-import { loadSettings, saveSettings } from "./popup/settings-store.js";
+import { loadSettings, saveSettings } from "./settings-store.js";
 
 const $ = (selector) => document.querySelector(selector);
 const apiKeysList = $("#apiKeysList");
@@ -278,7 +278,7 @@ updateProviderUI();
 
 openGuideButton.addEventListener("click", () => {
     try {
-        chrome.tabs.create({ url: chrome.runtime.getURL("guide.html") }, () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL("guide/index.html") }, () => {
             if (chrome.runtime.lastError) {
                 console.warn("[ PecoXT ] No se pudo abrir la guía.");
                 saveStatus.textContent = "No se pudo abrir la guía";

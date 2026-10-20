@@ -1,8 +1,8 @@
-import { callGemini, createPrompt } from "./background/gemini.js";
-import { callGeminiWeb } from "./background/gemini-web.js";
-import { callDeepSeek } from "./background/deepseek.js";
-import { callChatGpt, hasChatGptConnection, registerChatGptPort } from "./background/chatgpt.js";
-import { getCacheKey, getFromCache, saveToCache } from "./background/cache.js";
+import { callGemini, createPrompt } from "./gemini.js";
+import { callGeminiWeb } from "./gemini-web.js";
+import { callDeepSeek } from "./deepseek.js";
+import { callChatGpt, hasChatGptConnection, registerChatGptPort } from "./chatgpt.js";
+import { getCacheKey, getFromCache, saveToCache } from "./cache.js";
 
 const DEBOUNCE_MS = 800;
 const ESSAY_DRAFT_DEDUPE_MS = 15000;
@@ -384,7 +384,7 @@ chrome.runtime.onInstalled.addListener((details) => {
         });
     }
     if (details.reason !== "install") return;
-    chrome.tabs.create({ url: chrome.runtime.getURL("guide.html") }, () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("guide/index.html") }, () => {
         if (chrome.runtime.lastError) {
             console.warn("[ PecoXT ] No se pudo abrir automáticamente la guía de inicio.");
         }
@@ -618,8 +618,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message?.type === "PECO_RUN_PRACTICE") {
-        const guideUrl = chrome.runtime.getURL("guide.html");
-        const practiceUrl = chrome.runtime.getURL("practice.html");
+        const guideUrl = chrome.runtime.getURL("guide/index.html");
+        const practiceUrl = chrome.runtime.getURL("guide/practice.html");
         const isGuidePage = sender.url === guideUrl || sender.url?.startsWith(`${guideUrl}?`) || sender.url?.startsWith(`${guideUrl}#`);
         const isPracticePage = sender.url === practiceUrl || sender.url?.startsWith(`${practiceUrl}?`) || sender.url?.startsWith(`${practiceUrl}#`);
         if (!isGuidePage && !isPracticePage) {

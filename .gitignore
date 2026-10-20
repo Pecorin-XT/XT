@@ -1,7 +1,4 @@
-node_modules/
-dist/
 *.crx
 *.pem
 *.zip
-.env
-.env.*
+!released/*.zip
