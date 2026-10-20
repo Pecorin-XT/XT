@@ -30,17 +30,8 @@
                 </svg>
                 <span id="noticesBadge" class="notices-badge" hidden></span>
             </button>
-            <button type="button" id="openLicense" class="guide-button"
-                aria-label="Abrir licencias" title="Licencia Peco-XT"
-                aria-expanded="false" aria-controls="licenseView">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="8" cy="15" r="5.25" />
-                    <path d="m11.8 11.2 8.7-8.7 2.1 2.1-2.1 2.1 1.5 1.5-2.1 2.1-1.5-1.5-2.8 2.8" />
-                </svg>
-            </button>
         </header>
 
-        <div id="settingsView">
         <section id="noticesPanel" class="notices-panel" aria-label="Avisos de configuración" hidden>
             <div class="notices-heading">
                 <div>
@@ -101,7 +92,6 @@
                     </button>
                 </div>
                 <div id="apiKeysList" class="api-keys-list" hidden></div>
-                <p id="apiKeyPlanNote" class="plan-limit-note"></p>
             </div>
 
             <div class="prompt-control">
@@ -195,62 +185,9 @@
                 <span class="shortcut-key">ALT</span>
                 <span>+</span>
                 <span class="shortcut-key">CLIC</span>
-                <span id="forceRefreshHint">Completo: ignorar caché</span>
+                <span>ignorar caché</span>
             </div>
         </footer>
-        </div>
-
-        <section id="licenseView" class="license-view" aria-labelledby="licenseHeading" hidden>
-            <button type="button" id="backToSettings" class="license-back">
-                <span aria-hidden="true">←</span> Volver a ajustes
-            </button>
-            <div class="license-page-heading">
-                <span class="license-page-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                        <circle cx="8" cy="15" r="5.25" />
-                        <path d="m11.8 11.2 8.7-8.7 2.1 2.1-2.1 2.1 1.5 1.5-2.1 2.1-1.5-1.5-2.8 2.8" />
-                    </svg>
-                </span>
-                <div>
-                    <h2 id="licenseHeading">Licencias Peco-XT</h2>
-                    <p>Gestiona tu acceso Completo en este dispositivo.</p>
-                </div>
-            </div>
-            <div class="license-plan">
-                <h3>Gratis</h3>
-                <ul>
-                    <li>Toda la personalización de apariencia.</li>
-                    <li>Elige una IA; tras usarla por primera vez, queda asociada a este perfil.</li>
-                    <li>Una clave de Gemini API.</li>
-                    <li>Atajo Ctrl+clic.</li>
-                </ul>
-            </div>
-            <div class="license-plan license-plan-complete">
-                <h3>Completo</h3>
-                <ul>
-                    <li>Cambia entre Gemini API, Gemini web, DeepSeek y ChatGPT.</li>
-                    <li>Configura varias claves de Gemini API.</li>
-                    <li>Usa Ctrl+Alt+clic para omitir la caché y pedir una nueva respuesta.</li>
-                    <li>Hasta dos instalaciones/perfiles por licencia.</li>
-                </ul>
-            </div>
-            <p id="licenseStatus" class="license-status" role="status" aria-live="polite">
-                Comprobando licencia...
-            </p>
-            <label class="license-field-label" for="licenseKey">Clave proporcionada por el administrador</label>
-            <div class="license-controls">
-                <input id="licenseKey" class="license-key-input" type="password"
-                    autocomplete="off" spellcheck="false" placeholder="Pega aquí tu clave de licencia" />
-                <button type="button" id="activateLicense" class="compact-button">Activar</button>
-            </div>
-            <button type="button" id="deactivateLicense" class="license-deactivate" hidden>
-                Desactivar en este dispositivo
-            </button>
-            <p class="license-footnote">
-                La clave se guarda en este perfil del navegador. No compartas tu clave.
-                No se realizan pagos desde esta pantalla.
-            </p>
-        </section>
     </main>
     <script type="module" src="popup.js"></script>
 </body>

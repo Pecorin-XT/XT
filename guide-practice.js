@@ -98,11 +98,6 @@ function explainRequestError(code) {
         "provider-disconnected": "El proveedor se desconectó. Vuelve a abrir su pestaña o panel e inténtalo otra vez.",
         "provider-unresponsive": "El proveedor no respondió a tiempo. Comprueba que siga abierto e inténtalo de nuevo.",
         "provider-request-failed": "No se pudo completar la consulta. Comprueba el proveedor y su sesión.",
-        "free-provider-locked": "El plan gratuito queda asociado a la primera IA usada. Activa Completo para cambiar de proveedor.",
-        "premium-api-fallback-required": "El respaldo automático entre IAs está disponible con la licencia Completa.",
-        "free-provider-locked": "El plan gratuito queda asociado a la primera IA usada. Activa Completo para cambiar de proveedor.",
-        "premium-api-fallback-required": "El respaldo automático entre IAs está disponible con la licencia Completa.",
-        "premium-feature-required": "Ctrl+Alt+clic es una función de la licencia Completa.",
     };
     return messages[code] || "No se pudo completar la prueba. Abre los avisos del popup para ver qué revisar.";
 }

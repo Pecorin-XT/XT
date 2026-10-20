@@ -3,13 +3,6 @@ import { callGeminiWeb } from "./background/gemini-web.js";
 import { callDeepSeek } from "./background/deepseek.js";
 import { callChatGpt, hasChatGptConnection, registerChatGptPort } from "./background/chatgpt.js";
 import { getCacheKey, getFromCache, saveToCache } from "./background/cache.js";
-import {
-    activateLicense,
-    deactivateLicense,
-    getLicenseClientSettings,
-    setLocalLicenseApiUrl,
-    validateLicense,
-} from "./background/license-client.js";
 
 const DEBOUNCE_MS = 800;
 const ESSAY_DRAFT_DEDUPE_MS = 15000;
@@ -47,9 +40,6 @@ function getProviderName(provider) {
 function getUserFacingError(errorMessage) {
     const noticeCode = classifyUserNotice(errorMessage);
     const messages = {
-        "premium-feature-required": "esta función requiere la licencia Completa",
-        "free-provider-locked": "el plan gratuito está asociado a otra IA",
-        "premium-api-fallback-required": "la IA seleccionada no respondió y el respaldo requiere la licencia Completa",
         "missing-api-key": "falta configurar una clave de Gemini API",
         "missing-provider-tab": "no se encontró una pestaña abierta de la IA seleccionada",
         "provider-disconnected": "la sesión con la IA se desconectó o no está lista",
@@ -57,35 +47,6 @@ function getUserFacingError(errorMessage) {
         "provider-request-failed": "no se pudo completar la consulta",
     };
     return messages[noticeCode];
-}
-
-async function hasCompleteLicense() {
-    try {
-        const license = await validateLicense();
-        return license.active === true && license.plan === "complete";
-    } catch (error) {
-        console.warn("[ PecoXT ] No se pudo comprobar la licencia; se continuará con el plan gratuito.");
-        return false;
-    }
-}
-
-async function lockFreeProviderNow(provider) {
-    if (await hasCompleteLicense()) return;
-    const { pecoFreeProviderLock } = await storageGet("local", ["pecoFreeProviderLock"]);
-    if (pecoFreeProviderLock && pecoFreeProviderLock !== provider) {
-        throw new Error("FREE_PROVIDER_LOCKED");
-    }
-    if (!pecoFreeProviderLock) {
-        await storageSet("local", { pecoFreeProviderLock: provider });
-    }
-}
-
-let providerLockQueue = Promise.resolve();
-function lockFreeProvider(provider) {
-    const request = providerLockQueue.then(() => lockFreeProviderNow(provider));
-    // The caller receives this request's error; reset the tail so later requests can continue.
-    providerLockQueue = request.catch(() => {});
-    return request;
 }
 
 function callWebProvider(provider, prompt, payload, signal, requestId) {
@@ -148,9 +109,6 @@ async function callConfiguredProvider(provider, payload, signal, requestId, resp
     const fallbackApiKeys = await getConfiguredApiKeys();
     if (!fallbackApiKeys.length) {
         throw new Error(`NO_API_KEY_FALLBACK: ${lastError?.message || "WEB_PROVIDER_UNRESPONSIVE"}`);
-    }
-    if (!(await hasCompleteLicense())) {
-        throw new Error(`PREMIUM_API_FALLBACK_REQUIRED: ${lastError?.message || "WEB_PROVIDER_UNRESPONSIVE"}`);
     }
     return {
         ...await callGemini(fallbackApiKeys, payload, signal, responseStyle),
@@ -306,9 +264,6 @@ function queryTabs(urls) {
 }
 
 function classifyUserNotice(errorMessage) {
-    if (errorMessage === "PREMIUM_FEATURE_REQUIRED") return "premium-feature-required";
-    if (errorMessage === "FREE_PROVIDER_LOCKED") return "free-provider-locked";
-    if (errorMessage.startsWith("PREMIUM_API_FALLBACK_REQUIRED")) return "premium-api-fallback-required";
     if (errorMessage === "NO_API_KEY" || errorMessage.startsWith("NO_API_KEY_FALLBACK")) return "missing-api-key";
     if (errorMessage.includes("TAB_NOT_FOUND")) return "missing-provider-tab";
     if (
@@ -390,12 +345,8 @@ async function runPracticeQuestion(payload, requestId) {
     }
     const { provider = "gemini" } = await storageGet("sync", ["provider"]);
     const selectedProvider = PROVIDERS.includes(provider) ? provider : "gemini";
-    if (payload.forceRefresh && !(await hasCompleteLicense())) {
-        throw new Error("PREMIUM_FEATURE_REQUIRED");
-    }
     const apiKeys = selectedProvider === "gemini" ? await getConfiguredApiKeys() : [];
     if (selectedProvider === "gemini" && !apiKeys.length) throw new Error("NO_API_KEY");
-    await lockFreeProvider(selectedProvider);
     const responseStyle = await getResponseStyle();
     const controller = new AbortController();
     const promptPayload = { ...payload, questionId: `practice_${requestId}`, contentHash: requestId };
@@ -419,6 +370,19 @@ async function runPracticeQuestion(payload, requestId) {
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
+    if (details.reason === "update") {
+        chrome.storage.local.remove([
+            "pecoLicenseKey",
+            "pecoLicenseDeviceId",
+            "pecoLicenseStatus",
+            "pecoLicenseApiBaseUrl",
+            "pecoFreeProviderLock",
+        ], () => {
+            if (chrome.runtime.lastError) {
+                console.warn("[ PecoXT ] No se pudieron limpiar datos antiguos de licencia.");
+            }
+        });
+    }
     if (details.reason !== "install") return;
     chrome.tabs.create({ url: chrome.runtime.getURL("guide.html") }, () => {
         if (chrome.runtime.lastError) {
@@ -495,13 +459,10 @@ async function getConfiguredApiKeys() {
     const configuredKeys = Array.isArray(apiKeys)
         ? apiKeys.filter((key) => typeof key === "string" && key.trim()).map((key) => key.trim())
         : [];
-    if (configuredKeys.length) {
-        return await hasCompleteLicense() ? configuredKeys : configuredKeys.slice(0, 1);
-    }
+    if (configuredKeys.length) return configuredKeys;
 
     const { apiKey } = await storageGet("sync", ["apiKey"]);
-    const legacyKeys = apiKey?.trim() ? [apiKey.trim()] : [];
-    return await hasCompleteLicense() ? legacyKeys : legacyKeys.slice(0, 1);
+    return apiKey?.trim() ? [apiKey.trim()] : [];
 }
 
 async function getResponseStyle() {
@@ -530,9 +491,6 @@ async function processQuestion(tabId, payload) {
         const { provider: savedProvider } = await storageGet("sync", ["provider"]);
         provider = PROVIDERS.includes(savedProvider) ? savedProvider : "gemini";
         console.info(`[ PecoXT ] IA activa: ${getProviderName(provider)}. Iniciando análisis.`);
-        if (payload.forceRefresh && !(await hasCompleteLicense())) {
-            throw new Error("PREMIUM_FEATURE_REQUIRED");
-        }
         const essayDraftKey = payload.type === "essay"
             ? getEssayDraftKey(tabId, payload, provider)
             : null;
@@ -549,8 +507,6 @@ async function processQuestion(tabId, payload) {
 
         const apiKeys = provider === "gemini" ? await getConfiguredApiKeys() : [];
         if (provider === "gemini" && !apiKeys.length) throw new Error("NO_API_KEY");
-        await lockFreeProvider(provider);
-
         const cacheKey = getCacheKey(payload.questionId, payload.contentHash, provider);
         let previousAnswer = payload.forceRefresh ? recentAnswers.get(`${provider}_${requestKey}`) : null;
         if (payload.forceRefresh && previousAnswer == null && essayDraftKey) {
@@ -619,17 +575,6 @@ async function processQuestion(tabId, payload) {
         if (errorMessage !== "REQUEST_ABORTED") {
             console.warn(`[ PecoXT ] Problema detectado: ${getUserFacingError(errorMessage)}.`);
         }
-        if (
-            errorMessage === "PREMIUM_FEATURE_REQUIRED" ||
-            errorMessage === "FREE_PROVIDER_LOCKED" ||
-            errorMessage.startsWith("PREMIUM_API_FALLBACK_REQUIRED")
-        ) {
-            chrome.tabs.sendMessage(tabId, { type: "PECO_LICENSE_NOTICE", reason: errorMessage }, () => {
-                if (chrome.runtime.lastError) {
-                    console.warn("[ PecoXT ] No se pudo mostrar el aviso de licencia en la página.");
-                }
-            });
-        }
         if (errorMessage !== "REQUEST_ABORTED") saveUserNotice(provider, errorMessage);
         setIcon(tabId, errorMessage === "REQUEST_ABORTED" ? "idle" : "error");
     } finally {
@@ -642,46 +587,6 @@ async function processQuestion(tabId, payload) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message?.type === "PECO_LICENSE_ACTIVATE") {
-        activateLicense(message.licenseKey).then(
-            (license) => sendResponse({ ok: true, license }),
-            (error) => sendResponse({ ok: false, error: error.message })
-        );
-        return true;
-    }
-
-    if (message?.type === "PECO_LICENSE_STATUS") {
-        validateLicense().then(
-            (license) => sendResponse({ ok: true, license }),
-            (error) => sendResponse({ ok: false, error: error.message })
-        );
-        return true;
-    }
-
-    if (message?.type === "PECO_LICENSE_CLIENT_SETTINGS") {
-        getLicenseClientSettings().then(
-            (settings) => sendResponse({ ok: true, settings }),
-            (error) => sendResponse({ ok: false, error: error.message })
-        );
-        return true;
-    }
-
-    if (message?.type === "PECO_LICENSE_SET_LOCAL_API_URL") {
-        setLocalLicenseApiUrl(message.url || "").then(
-            (settings) => sendResponse({ ok: true, settings }),
-            (error) => sendResponse({ ok: false, error: error.message })
-        );
-        return true;
-    }
-
-    if (message?.type === "PECO_LICENSE_DEACTIVATE") {
-        deactivateLicense().then(
-            (license) => sendResponse({ ok: true, license }),
-            (error) => sendResponse({ ok: false, error: error.message })
-        );
-        return true;
-    }
-
     if (message?.type === "PECO_GET_SETUP_STATUS") {
         getSetupStatus().then((status) => {
             chrome.storage.local.get([NOTICE_STORAGE_KEY], (stored) => {

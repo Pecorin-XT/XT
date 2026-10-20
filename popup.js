@@ -26,19 +26,9 @@ const noticesList = $("#noticesList");
 const noticesEmpty = $("#noticesEmpty");
 const clearNoticesButton = $("#clearNotices");
 const providerInputs = [...document.querySelectorAll('input[name="provider"]')];
-const licenseKeyInput = $("#licenseKey");
-const licenseStatus = $("#licenseStatus");
-const activateLicenseButton = $("#activateLicense");
-const deactivateLicenseButton = $("#deactivateLicense");
-const openLicenseButton = $("#openLicense");
-const licenseView = $("#licenseView");
-const settingsView = $("#settingsView");
-const backToSettingsButton = $("#backToSettings");
 let apiKeysExpanded = false;
 let noticeHistory = [];
 let settingsLoaded = false;
-let currentLicense = { active: false, plan: "free" };
-let freeProviderLock = "";
 let saveTimer;
 let saveQueue = Promise.resolve();
 let latestSaveId = 0;
@@ -53,16 +43,6 @@ function updateApiKeysLabel() {
     apiKeysLabel.textContent = `${action} (${readApiKeys().length})`;
 }
 
-function showLicenseView(show) {
-    licenseView.hidden = !show;
-    settingsView.hidden = show;
-    openLicenseButton.setAttribute("aria-expanded", String(show));
-    openLicenseButton.title = show ? "Volver a ajustes" : "Licencia Peco-XT";
-    if (show) {
-        refreshLicenseStatus();
-    }
-}
-
 function updateProviderUI() {
     const provider = providerInputs.find((input) => input.checked)?.value || "gemini";
     $("#geminiKeysSection").hidden = provider !== "gemini";
@@ -72,12 +52,7 @@ function updateProviderUI() {
         deepseek: "Se activará DeepSeek en una pestaña normal. Si no responde, reintenta y usa Gemini API; configura su clave en la opción Gemini.",
         chatgpt: "Se activará ChatGPT en una pestaña normal. Si no responde, reintenta y usa Gemini API; configura su clave en la opción Gemini.",
     };
-    const planHint = !isCompletePlan()
-        ? freeProviderLock
-            ? " La versión gratuita está asociada a esta IA tras su primer uso."
-            : " En Gratis, la IA elegida quedará asociada a este perfil al usarla por primera vez."
-        : "";
-    $("#providerHelp").textContent = `${helpMessages[provider] || helpMessages.gemini}${planHint}`;
+    $("#providerHelp").textContent = helpMessages[provider] || helpMessages.gemini;
 }
 
 function sendRuntimeMessage(message) {
@@ -93,160 +68,6 @@ function sendRuntimeMessage(message) {
     });
 }
 
-function getLocalStorageValue(key) {
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.get([key], (stored) => {
-            if (chrome.runtime.lastError) {
-                reject(new Error(chrome.runtime.lastError.message));
-                return;
-            }
-            resolve(stored[key]);
-        });
-    });
-}
-
-function isCompletePlan() {
-    return currentLicense.active === true && currentLicense.plan === "complete";
-}
-
-function applyPlanLimitations() {
-    const complete = isCompletePlan();
-    $("#forceRefreshHint").textContent = complete
-        ? "ignorar caché"
-        : "Completo: ignorar caché";
-    $("#apiKeyPlanNote").textContent = complete
-        ? "Plan Completo: puedes configurar varias claves de respaldo."
-        : "Plan gratuito: solo se utilizará una clave API; la apariencia no tiene límites.";
-    providerInputs.forEach((input) => {
-        input.disabled = !complete && Boolean(freeProviderLock) && input.value !== freeProviderLock;
-        const label = input.closest(".provider-option");
-        label?.classList.toggle("provider-locked", input.disabled);
-    });
-    const rows = [...apiKeysList.querySelectorAll(".api-key-row")];
-    rows.forEach((row, index) => {
-        const limited = !complete && index > 0;
-        row.querySelector("input").disabled = limited;
-        row.querySelectorAll("button").forEach((button) => {
-            button.disabled = limited;
-        });
-    });
-    const configuredKeyCount = readApiKeys().filter((key) => key.trim()).length;
-    addKeyButton.disabled = !complete && configuredKeyCount >= 1;
-    addKeyButton.title = addKeyButton.disabled
-        ? "El plan gratuito incluye una clave API"
-        : "Agregar clave API";
-    toggleApiKeysButton.title = complete
-        ? "Ver las claves API configuradas"
-        : "El plan gratuito usa una sola clave API";
-}
-
-function renderLicenseStatus(license, error = "") {
-    if (error) {
-        currentLicense = { active: false, plan: "free" };
-        licenseStatus.textContent = error.includes("LICENSE_SERVER_UNAVAILABLE")
-            ? "No se pudo conectar al servidor de licencias. Inténtalo de nuevo más tarde."
-            : error.includes("DEVICE_LIMIT_REACHED")
-                ? "La licencia ya alcanzó su límite de dispositivos. Contacta al administrador para liberar una activación."
-                : error.includes("LICENSE_EXPIRED")
-                    ? "La licencia venció."
-                    : error.includes("DEACTIVATE_LICENSE_BEFORE_SWITCHING_SERVER")
-                        ? "Desactiva la licencia antes de cambiar el servidor."
-                        : "No se pudo validar la licencia. Revisa la clave o inténtalo nuevamente.";
-        licenseStatus.dataset.state = "error";
-        deactivateLicenseButton.hidden = true;
-        applyPlanLimitations();
-        return;
-    }
-    currentLicense = license || { active: false, plan: "free" };
-    if (!license?.active) {
-        licenseStatus.textContent = "Plan gratuito activo en este perfil.";
-        licenseStatus.dataset.state = "free";
-        deactivateLicenseButton.hidden = true;
-        applyPlanLimitations();
-        return;
-    }
-    const expiry = license.expiresAt
-        ? ` · vence ${new Date(license.expiresAt).toLocaleDateString()}`
-        : "";
-    const holderName = typeof license.holderName === "string" && license.holderName.trim()
-        ? ` · Titular: ${license.holderName.trim()}`
-        : "";
-    licenseStatus.textContent =
-        `Licencia Completa activa${holderName} · ${license.devicesUsed}/${license.deviceLimit} activaciones${expiry}`;
-    licenseStatus.dataset.state = "active";
-    deactivateLicenseButton.hidden = false;
-    applyPlanLimitations();
-}
-
-async function refreshLicenseStatus() {
-    licenseStatus.textContent = "Comprobando licencia...";
-    licenseStatus.dataset.state = "loading";
-    try {
-        const response = await sendRuntimeMessage({ type: "PECO_LICENSE_STATUS" });
-        if (!response?.ok) {
-            renderLicenseStatus(null, response?.error || "LICENSE_STATUS_FAILED");
-            return;
-        }
-        renderLicenseStatus(response.license);
-        freeProviderLock = await getLocalStorageValue("pecoFreeProviderLock") || "";
-        applyPlanLimitations();
-    } catch (error) {
-        console.warn("[ PecoXT ] No se pudo comprobar la licencia.");
-        renderLicenseStatus(null, error.message);
-    }
-}
-
-activateLicenseButton.addEventListener("click", async () => {
-    const licenseKey = licenseKeyInput.value.trim();
-    if (!licenseKey) {
-        licenseStatus.textContent = "Pega la clave que te proporcionó el administrador.";
-        licenseStatus.dataset.state = "error";
-        return;
-    }
-    activateLicenseButton.disabled = true;
-    licenseStatus.textContent = "Validando y activando...";
-    licenseStatus.dataset.state = "loading";
-    try {
-        const response = await sendRuntimeMessage({
-            type: "PECO_LICENSE_ACTIVATE",
-            licenseKey,
-        });
-        if (!response?.ok) {
-            renderLicenseStatus(null, response?.error || "LICENSE_ACTIVATION_FAILED");
-            return;
-        }
-        licenseKeyInput.value = "";
-        renderLicenseStatus(response.license);
-    } catch (error) {
-        console.warn("[ PecoXT ] No se pudo activar la licencia.");
-        renderLicenseStatus(null, error.message);
-    } finally {
-        activateLicenseButton.disabled = false;
-    }
-});
-
-openLicenseButton.addEventListener("click", () => showLicenseView(licenseView.hidden));
-backToSettingsButton.addEventListener("click", () => showLicenseView(false));
-
-deactivateLicenseButton.addEventListener("click", async () => {
-    deactivateLicenseButton.disabled = true;
-    licenseStatus.textContent = "Desactivando este dispositivo...";
-    licenseStatus.dataset.state = "loading";
-    try {
-        const response = await sendRuntimeMessage({ type: "PECO_LICENSE_DEACTIVATE" });
-        if (!response?.ok) {
-            renderLicenseStatus(null, response?.error || "LICENSE_DEACTIVATION_FAILED");
-            return;
-        }
-        renderLicenseStatus(response.license);
-    } catch (error) {
-        console.warn("[ PecoXT ] No se pudo desactivar la licencia.");
-        renderLicenseStatus(null, error.message);
-    } finally {
-        deactivateLicenseButton.disabled = false;
-    }
-});
-
 function describeUserNotice(notice) {
     const providers = {
         gemini: "Gemini API",
@@ -261,9 +82,6 @@ function describeUserNotice(notice) {
         "provider-disconnected": "Vuelve a abrir la pestaña del proveedor. El panel lateral es compatible únicamente con ChatGPT.",
         "provider-unresponsive": "Comprueba que el sitio esté abierto y vuelve a intentarlo.",
         "provider-request-failed": "Comprueba la sesión y la conexión del proveedor antes de reintentar.",
-        "premium-feature-required": "Ctrl+Alt+clic es parte de la licencia Completa. Abre Licencias desde el popup para más información.",
-        "free-provider-locked": "La versión gratuita queda asociada a la primera IA usada. Activa Completo para cambiar de proveedor.",
-        "premium-api-fallback-required": "El respaldo automático entre IAs requiere Completo. Reintenta con la IA seleccionada o usa Gemini API.",
     };
     const provider = providers[notice.provider] || "El proveedor";
     return `${provider}: ${advice[notice.code] || "Revisa la configuración antes de volver a intentarlo."}`;
@@ -359,7 +177,6 @@ function renderApiKeys(keys) {
     apiKeysList.hidden = !apiKeysExpanded;
     toggleApiKeysButton.setAttribute("aria-expanded", String(apiKeysExpanded));
     updateApiKeysLabel();
-    applyPlanLimitations();
 }
 
 function readApiKeys() {
@@ -451,12 +268,6 @@ previewThemeToggle.addEventListener("click", () => {
     previewThemeToggle.title = action;
 });
 providerInputs.forEach((input) => input.addEventListener("change", () => {
-    if (!isCompletePlan() && freeProviderLock && input.value !== freeProviderLock) {
-        providerInputs.forEach((item) => { item.checked = item.value === freeProviderLock; });
-        licenseStatus.textContent = "Esta instalación gratuita ya está asociada a otra IA. Activa Completo para cambiarla.";
-        licenseStatus.dataset.state = "error";
-        return;
-    }
     updateProviderUI();
     scheduleSave(0);
     if (!noticesPanel.hidden) refreshSetupStatus();
@@ -552,15 +363,6 @@ try {
     updatePreview();
     settingsLoaded = true;
     refreshSetupStatus();
-    Promise.all([
-        getLocalStorageValue("pecoFreeProviderLock"),
-    ]).then(([providerLock]) => {
-        freeProviderLock = providerLock || "";
-        if (licenseView.hidden) applyPlanLimitations();
-    }).catch((error) => {
-        console.warn("[ PecoXT ] No se pudo leer la configuración local.");
-    });
-    refreshLicenseStatus();
 } catch (error) {
     console.warn("[ PecoXT ] No se pudo cargar la configuración.");
 }

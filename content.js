@@ -22,36 +22,7 @@
     }
 
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.type === "PECO_LICENSE_NOTICE") {
-            const noticeId = "peco-license-feature-notice";
-            document.getElementById(noticeId)?.remove();
-            const notice = document.createElement("div");
-            notice.id = noticeId;
-            notice.setAttribute("role", "status");
-            notice.setAttribute("aria-live", "polite");
-            notice.textContent = message.reason === "PREMIUM_FEATURE_REQUIRED"
-                ? "Ctrl+Alt+clic es una función Completa. Abre el popup y entra en Licencias para más información."
-                : message.reason === "FREE_PROVIDER_LOCKED"
-                    ? "El plan gratuito está asociado a otra IA. Activa Completo para cambiar de proveedor."
-                    : "El respaldo entre IAs está incluido en Completo. Reintenta con el proveedor seleccionado.";
-            Object.assign(notice.style, {
-                position: "fixed",
-                zIndex: "2147483647",
-                right: "16px",
-                bottom: "16px",
-                maxWidth: "360px",
-                padding: "12px 16px",
-                border: "1px solid #67B7E5",
-                borderRadius: "10px",
-                background: "#17243A",
-                color: "#FFFFFF",
-                boxShadow: "0 8px 28px rgba(0,0,0,.35)",
-                font: "600 13px/1.45 system-ui, sans-serif",
-                pointerEvents: "none",
-            });
-            document.documentElement.append(notice);
-            setTimeout(() => notice.remove(), 6500);
-        } else if (message.type === "HIGHLIGHT_ANSWER") {
+        if (message.type === "HIGHLIGHT_ANSWER") {
             loadAndApply((cfg) => {
                 globalThis.QuizAIContent.applyHighlight(
                     message.correctAnswerIds || [message.correctAnswerId],
