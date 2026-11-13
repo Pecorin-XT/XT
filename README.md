@@ -21,7 +21,7 @@ La extensión no proporciona cuentas, suscripciones ni claves de IA. Todas las f
 
 ## Instalar en Opera
 
-No necesitas instalar herramientas ni compilar la extensión. Descarga el [ZIP listo para instalar](https://github.com/Pecorin-XT/XT/raw/refs/heads/main/released/Peco-XT-Opera-v1.1.2.zip) y extráelo. Después:
+No necesitas instalar herramientas ni compilar la extensión. Descarga el [ZIP listo para instalar](https://github.com/Pecorin-XT/XT/raw/refs/heads/main/released/Peco-XT-Opera-v1.2.7.zip) y extráelo. Después:
 
 1. Abre `opera://extensions`.
 2. Activa el **Modo de desarrollador**.

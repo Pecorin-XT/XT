@@ -2,6 +2,7 @@ import { callGemini, createPrompt } from "./gemini.js";
 import { callGeminiWeb } from "./gemini-web.js";
 import { callDeepSeek } from "./deepseek.js";
 import { callChatGpt, hasChatGptConnection, registerChatGptPort } from "./chatgpt.js";
+import { callClaude, hasClaudeConnection, registerClaudePort } from "./claude.js";
 import { getCacheKey, getFromCache, saveToCache } from "./cache.js";
 
 const DEBOUNCE_MS = 800;
@@ -11,17 +12,19 @@ const activeRequests = new Set();
 const recentEssayDrafts = new Map();
 const recentAnswers = new Map();
 const NOTICE_STORAGE_KEY = "pecoUserNotices";
-const PROVIDERS = ["gemini", "gemini-web", "deepseek", "chatgpt"];
+const PROVIDERS = ["gemini", "gemini-web", "deepseek", "chatgpt", "claude"];
 const PRACTICE_QUESTION_TYPES = new Set(["multiple_choice", "multiple_answers", "essay"]);
 const WEB_PROVIDER_URLS = {
     "gemini-web": ["https://gemini.google.com/*", "https://bard.google.com/*"],
     deepseek: ["https://chat.deepseek.com/*"],
     chatgpt: ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+    claude: ["https://claude.ai/*"],
 };
 const WEB_PROVIDER_HOME_URLS = {
     "gemini-web": "https://gemini.google.com/app",
     deepseek: "https://chat.deepseek.com/",
     chatgpt: "https://chatgpt.com/",
+    claude: "https://claude.ai/",
 };
 const WEB_PROVIDER_ATTEMPTS = 2;
 const PROVIDER_WARMUP_MS = 1800;
@@ -52,6 +55,7 @@ function getUserFacingError(errorMessage) {
 function callWebProvider(provider, prompt, payload, signal, requestId) {
     if (provider === "deepseek") return callDeepSeek(prompt, payload, signal);
     if (provider === "chatgpt") return callChatGpt(prompt, payload, signal, requestId);
+    if (provider === "claude") return callClaude(prompt, payload, signal, requestId);
     return callGeminiWeb(prompt, payload, signal, requestId);
 }
 
@@ -89,22 +93,33 @@ async function callConfiguredProvider(provider, payload, signal, requestId, resp
 
     let lastError;
     for (let attempt = 0; attempt < WEB_PROVIDER_ATTEMPTS; attempt++) {
+        console.log(`[PecoXT][DIAG][provider=${provider}] intento ${attempt + 1}/${WEB_PROVIDER_ATTEMPTS}`);
         try {
-            return {
-                ...await callWebProvider(provider, prompt, payload, signal, requestId),
-                provider,
-            };
+            const result = await callWebProvider(provider, prompt, payload, signal, requestId);
+            console.log(`[PecoXT][DIAG][provider=${provider}] OK`, {
+                hasAnswer: Boolean(result.answer),
+                answerPreview: result.answer ? result.answer.slice(0, 80) : null,
+                correctAnswerId: result.correctAnswerId,
+                correctAnswerIds: result.correctAnswerIds,
+            });
+            return { ...result, provider };
         } catch (error) {
+            console.error(`[PecoXT][DIAG][provider=${provider}] intento ${attempt + 1} fallo: "${error.message}"`);
             if (signal.aborted || error.message === "REQUEST_ABORTED") {
                 throw new Error("REQUEST_ABORTED");
             }
-            if (!isRetryableWebProviderError(error)) throw error;
+            if (!isRetryableWebProviderError(error)) {
+                console.error(`[PecoXT][DIAG][provider=${provider}] error NO retryable -> se propaga SIN fallback`);
+                throw error;
+            }
+            console.warn(`[PecoXT][DIAG][provider=${provider}] error retryable -> ${attempt + 1 < WEB_PROVIDER_ATTEMPTS ? "reintento en 1000ms" : "sin mas intentos"}`);
             lastError = error;
             if (attempt + 1 < WEB_PROVIDER_ATTEMPTS) {
                 await delayWithSignal(1000, signal);
             }
         }
     }
+    console.error(`[PecoXT][DIAG][provider=${provider}] agotados los intentos; ultimo error: "${lastError?.message}"`);
 
     const fallbackApiKeys = await getConfiguredApiKeys();
     if (!fallbackApiKeys.length) {
@@ -193,7 +208,7 @@ function showKeepTabNotice() {
 
 async function focusProviderTab(tab) {
     await callbackApi(chrome.windows, "update", tab.windowId, { focused: true });
-    await callbackApi(chrome.tabs, "update", tab.id, { active: true });
+    await callbackApi(chrome.tabs, "update", tab.id, { active: true, autoDiscardable: false });
 }
 
 async function restoreOriginalTab(tab) {
@@ -307,16 +322,19 @@ async function getSetupStatus() {
         "gemini-web": { ready: false, detail: "No hay una pestaña de Gemini abierta" },
         deepseek: { ready: false, detail: "No hay una pestaña de DeepSeek abierta" },
         chatgpt: { ready: false, detail: "No hay una pestaña de ChatGPT abierta" },
+        claude: { ready: false, detail: "No hay una pestaña de Claude abierta" },
     };
 
-    const [geminiTabs, deepseekTabs, chatgptTabs] = await Promise.all([
+    const [geminiTabs, deepseekTabs, chatgptTabs, claudeTabs] = await Promise.all([
         queryTabs(["https://gemini.google.com/*", "https://bard.google.com/*"]),
         queryTabs("https://chat.deepseek.com/*"),
         queryTabs(["https://chatgpt.com/*", "https://chat.openai.com/*"]),
+        queryTabs("https://claude.ai/*"),
     ]);
     const geminiReady = geminiTabs.some((tab) => tab.status === "complete");
     const deepseekReady = deepseekTabs.some((tab) => tab.status === "complete");
     const chatgptReady = chatgptTabs.some((tab) => tab.status === "complete") || hasChatGptConnection();
+    const claudeReady = claudeTabs.some((tab) => tab.status === "complete") || hasClaudeConnection();
     checks["gemini-web"] = {
         ready: geminiReady,
         detail: geminiReady ? "Gemini está abierto en una pestaña" : "Abre Gemini en una pestaña e inicia sesión",
@@ -328,6 +346,10 @@ async function getSetupStatus() {
     checks.chatgpt = {
         ready: chatgptReady,
         detail: chatgptReady ? "ChatGPT está abierto" : "Abre ChatGPT e inicia sesión",
+    };
+    checks.claude = {
+        ready: claudeReady,
+        detail: claudeReady ? "Claude está abierto" : "Abre Claude e inicia sesión",
     };
     return { provider: PROVIDERS.includes(provider) ? provider : "gemini", checks };
 }
@@ -658,15 +680,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.runtime.onConnect.addListener((port) => {
-    if (port.name !== "peco-chatgpt") return;
-    const pageUrl = port.sender?.url || "";
-    if (!/^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(pageUrl)) {
-        port.disconnect();
+    if (port.name === "peco-chatgpt") {
+        const pageUrl = port.sender?.url || "";
+        if (!/^https:\/\/(chatgpt\.com|chat\.openai\.com)\//i.test(pageUrl)) {
+            port.disconnect();
+            return;
+        }
+        registerChatGptPort(port, port.sender?.tab?.id);
+        port.postMessage({ type: "PECO_CHATGPT_PORT_READY" });
         return;
     }
 
-    registerChatGptPort(port, port.sender?.tab?.id);
-    port.postMessage({ type: "PECO_CHATGPT_PORT_READY" });
+    if (port.name === "peco-claude") {
+        const pageUrl = port.sender?.url || "";
+        if (!/^https:\/\/claude\.ai\//i.test(pageUrl)) {
+            port.disconnect();
+            return;
+        }
+        registerClaudePort(port, port.sender?.tab?.id);
+        port.postMessage({ type: "PECO_CLAUDE_PORT_READY" });
+        return;
+    }
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {

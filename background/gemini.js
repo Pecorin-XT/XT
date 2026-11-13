@@ -191,11 +191,9 @@ export async function callGemini(apiKeys, payload, signal, responseStyle) {
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }],
                             generationConfig: {
-                                temperature: 0,
                                 maxOutputTokens: payload.type === "essay"
                                     ? (attempt === 0 ? 512 : 1024)
                                     : 800,
-                                thinkingConfig: { thinkingBudget: 0 },
                             },
                         }),
                     });

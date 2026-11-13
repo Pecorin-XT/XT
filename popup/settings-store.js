@@ -56,7 +56,7 @@ export async function saveSettings(settings, apiKeys) {
         highlightColor: settings.highlightColor,
         highlightOpacity: settings.highlightOpacity,
         highlightRadius: settings.highlightRadius,
-        provider: ["gemini-web", "deepseek", "chatgpt"].includes(settings.provider) ? settings.provider : "gemini",
+        provider: ["gemini-web", "deepseek", "chatgpt", "claude"].includes(settings.provider) ? settings.provider : "gemini",
         responseStyle: settings.responseStyle,
         apiKey: "",
     });

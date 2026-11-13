@@ -51,6 +51,7 @@ function updateProviderUI() {
         "gemini-web": "Se activará Gemini en una pestaña normal. Si no responde, reintenta y usa Gemini API; configura su clave en la opción Gemini.",
         deepseek: "Se activará DeepSeek en una pestaña normal. Si no responde, reintenta y usa Gemini API; configura su clave en la opción Gemini.",
         chatgpt: "Se activará ChatGPT en una pestaña normal. Si no responde, reintenta y usa Gemini API; configura su clave en la opción Gemini.",
+        claude: "Se activará Claude en una pestaña normal. Si no responde, reintenta y usa Gemini API; configura su clave en la opción Gemini.",
     };
     $("#providerHelp").textContent = helpMessages[provider] || helpMessages.gemini;
 }
@@ -74,6 +75,7 @@ function describeUserNotice(notice) {
         "gemini-web": "Gemini web",
         deepseek: "DeepSeek",
         chatgpt: "ChatGPT",
+        claude: "Claude",
         practice: "La prueba guiada",
     };
     const advice = {
@@ -112,6 +114,7 @@ async function refreshSetupStatus() {
             "gemini-web": "Gemini web",
             deepseek: "DeepSeek",
             chatgpt: "ChatGPT",
+            claude: "Claude",
         };
         const selected = status.checks?.[status.provider];
         setupStatus.textContent = selected

@@ -9,6 +9,29 @@
     const STABLE_RESPONSE_MS = 3000;
     let generationQueue = Promise.resolve();
 
+    // KEEP-ALIVE: Evita que el navegador congele los temporizadores en segundo plano
+    function installKeepAlive() {
+        if (globalThis.__pecoKeepAlive) return;
+        globalThis.__pecoKeepAlive = true;
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            gain.gain.value = 0.0001;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            const resume = () => { if (ctx.state === "suspended") ctx.resume().catch(() => {}); };
+            document.addEventListener("click", resume);
+            document.addEventListener("keydown", resume);
+            document.addEventListener("visibilitychange", resume);
+            console.log("[PecoXT][keepalive] Pestaña de Gemini protegida contra congelamiento.");
+        } catch (e) { console.warn("[PecoXT][keepalive] Fallo audio:", e); }
+    }
+    installKeepAlive();
+
     function isVisible(element) {
         return Boolean(element && element.getClientRects().length);
     }
@@ -35,6 +58,10 @@
 
     function findSendButton() {
         const selectors = [
+            'div[data-test-id="send-button-container"] button',
+            'gem-icon-button.send-button button',
+            'button[aria-label="Enviar mensaje"]',
+            'button[aria-label="Send message"]',
             'button[aria-label*="Send" i]',
             'button[aria-label*="Enviar" i]',
             'button[data-test-id="send-button"]',
@@ -47,7 +74,7 @@
                 .find((candidate) =>
                     isVisible(candidate) &&
                     !candidate.disabled &&
-                    !candidate.getAttribute("aria-disabled")
+                    candidate.getAttribute("aria-disabled") !== "true"
                 );
             if (button) return { button, selector };
         }

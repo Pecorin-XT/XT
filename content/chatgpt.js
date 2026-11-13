@@ -10,6 +10,29 @@
     let generationQueue = Promise.resolve();
     let chatGptPort = null;
 
+    // KEEP-ALIVE: Evita que el navegador congele los temporizadores en segundo plano
+    function installKeepAlive() {
+        if (globalThis.__pecoKeepAlive) return;
+        globalThis.__pecoKeepAlive = true;
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            gain.gain.value = 0.0001;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            const resume = () => { if (ctx.state === "suspended") ctx.resume().catch(() => {}); };
+            document.addEventListener("click", resume);
+            document.addEventListener("keydown", resume);
+            document.addEventListener("visibilitychange", resume);
+            console.log("[PecoXT][keepalive] Pestaña de ChatGPT protegida contra congelamiento.");
+        } catch (e) { console.warn("[PecoXT][keepalive] Fallo audio:", e); }
+    }
+    installKeepAlive();
+
     function isVisible(element) {
         return Boolean(element && element.getClientRects().length);
     }
@@ -52,12 +75,14 @@
 
     function findSendButton() {
         const selectors = [
+            'button[type="submit"]',
+            'button[aria-label="Enviar"]',
+            'button[aria-label="Send"]',
             "button[data-composer-submit]",
             'button[data-testid="send-button"]',
-            'button[aria-label="Enviar mensaje"]',
-            'button[aria-label="Send prompt"]',
-            'button[aria-label="Send message"]',
-            'button[aria-label="Send"]',
+            'button[aria-label*="Enviar mensaje" i]',
+            'button[aria-label*="Send prompt" i]',
+            'button[aria-label*="Send message" i]',
         ];
         for (const selector of selectors) {
             const button = [...document.querySelectorAll(selector)]
@@ -68,46 +93,28 @@
     }
 
     function getAssistantResponses(promptText = "") {
-        const messages = [...document.querySelectorAll('[data-message-author-role="assistant"]')];
-        const assistantMessages = messages
-            .map((element) => {
-                const content = element.querySelector(".markdown") || element;
-                return {
-                    element,
-                    source: content === element ? "assistant-message" : ".markdown",
-                    text: content.innerText?.trim() || "",
-                };
-            })
-            .filter((entry) => entry.text);
+        // 1. Nuevo motor DIL de ChatGPT (2024+)
+        let elements = [...document.querySelectorAll('[data-dil-response]')];
+        
+        // 2. Fallbacks por si usan otra versión (A/B Testing)
+        if (!elements.length) {
+            elements = [...document.querySelectorAll('[data-message-author-role="assistant"]')];
+        }
+        if (!elements.length) {
+            elements = [...document.querySelectorAll('[data-assistant-markdown]')];
+        }
+        if (!elements.length) {
+            elements = [...document.querySelectorAll('.markdown')];
+        }
 
-        if (assistantMessages.length) return assistantMessages;
-
-        const assistantMarkdown = [...document.querySelectorAll("[data-assistant-markdown]")]
-            .map((element) => ({
-                element,
-                source: "data-assistant-markdown",
-                text: element.innerText?.trim() || "",
-            }))
-            .filter((entry) => entry.text && entry.text !== promptText.trim());
-
-        if (assistantMarkdown.length) return assistantMarkdown;
-
-        const turnSelectors = [
-            'main [data-testid^="conversation-turn-"]',
-            '[data-testid^="conversation-turn-"]',
-            'main [role="article"]',
-        ];
-        const turns = [...new Set(turnSelectors.flatMap((selector) =>
-            [...document.querySelectorAll(selector)]
-        ))];
         const normalizedPrompt = promptText.trim();
-        return turns
-            .map((element) => ({
-                element,
-                source: element.getAttribute("data-testid") || "conversation-turn",
-                text: (element.querySelector(".markdown") || element).innerText?.trim() || "",
-            }))
-            .filter((entry) => entry.text && entry.text !== normalizedPrompt);
+        return elements.map(element => {
+            const content = element.querySelector('[data-markdown-copy="contents"]') || element.querySelector('.markdown') || element;
+            return {
+                element: element,
+                text: content.innerText?.trim() || ""
+            };
+        }).filter(entry => entry.text && entry.text !== normalizedPrompt);
     }
 
     function isGeneratingResponse() {
@@ -125,8 +132,19 @@
             const startedAt = Date.now();
             let lastText = "";
             let stableSince = 0;
+            let pollTimer = null;
 
-            const poll = () => {
+            const cleanup = () => {
+                observer.disconnect();
+                if (pollTimer) clearTimeout(pollTimer);
+            };
+
+            const finish = (text) => {
+                cleanup();
+                resolve(text);
+            };
+
+            const checkForResponse = () => {
                 const responses = getAssistantResponses(prompt);
                 const lastResponse = responses[responses.length - 1];
                 const isNewResponse = lastResponse &&
@@ -139,18 +157,30 @@
                         lastText = lastResponse.text;
                         stableSince = Date.now();
                     } else if (!isGeneratingResponse() && Date.now() - stableSince >= STABLE_RESPONSE_MS) {
-                        resolve(lastText);
+                        finish(lastText);
                         return;
                     }
                 }
 
                 if (Date.now() - startedAt >= RESPONSE_TIMEOUT_MS) {
+                    cleanup();
                     reject(new Error("CHATGPT_RESPONSE_TIMEOUT"));
-                    return;
                 }
-                setTimeout(poll, RESPONSE_POLL_MS);
             };
-            setTimeout(poll, RESPONSE_POLL_MS);
+
+            const observer = new MutationObserver(() => {
+                if (pollTimer) clearTimeout(pollTimer);
+                pollTimer = setTimeout(checkForResponse, 100);
+            });
+            observer.observe(document.body, { childList: true, characterData: true, subtree: true });
+
+            const fallbackPoll = () => {
+                checkForResponse();
+                if (Date.now() - startedAt < RESPONSE_TIMEOUT_MS) {
+                    pollTimer = setTimeout(fallbackPoll, 1500);
+                }
+            };
+            fallbackPoll();
         });
     }
 
@@ -164,11 +194,22 @@
         setComposerText(composer, prompt);
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        const sendButton = findSendButton();
-        if (!sendButton) {
-            throw new Error("CHATGPT_SEND_BUTTON_NOT_READY");
+        let sendButton = null;
+        for (let i = 0; i < 10; i++) {
+            sendButton = findSendButton();
+            if (sendButton) break;
+            await new Promise((resolve) => setTimeout(resolve, 200));
         }
-        sendButton.button.click();
+
+        if (sendButton) {
+            sendButton.button.click();
+        } else {
+            console.warn("[PecoXT][page:chatgpt] Boton de enviar no encontrado, usando fallback a Enter");
+            composer.dispatchEvent(new KeyboardEvent("keydown", {
+                key: "Enter", code: "Enter", keyCode: 13, which: 13,
+                bubbles: true, cancelable: true
+            }));
+        }
 
         return waitForResponse(previousResponses, prompt);
     }

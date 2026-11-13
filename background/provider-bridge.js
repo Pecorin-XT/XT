@@ -88,6 +88,7 @@ export async function getReadyProviderTab({
     let lastError;
     for (const tab of candidates) {
         try {
+            chrome.tabs.update(tab.id, { autoDiscardable: false }).catch(() => {});
             if (tab.status !== "complete") await waitForTabLoad(tab.id, provider);
 
             let initialStatus;
